@@ -4,9 +4,13 @@
 [%- out = file _ "-out.txt" -%]
 [% INCLUDE $pl | xtidy %]
 
-produces output
+=begin html
 
-[% INCLUDE $out | xtidy %]
+<p>The output HTML looks like this:</p>
+
+[% INCLUDE $out %]
+
+=end html
 
 (This example is included as L<F<[% pl %]>|https://fastapi.metacpan.org/source/BKB/HTML-Make-Calendar-[% info.version %]/examples/[% pl %]> in the distribution.)
 [% END %]
@@ -17,7 +21,7 @@ This method was added in version [% version %] of the module.
 
 =head1 NAME
 
-[% info.colon %] - abstract here.
+[% info.colon %] - Make an HTML calendar
 
 =head1 SYNOPSIS
 
@@ -37,10 +41,50 @@ This module constructs HTML calendars.
 
 =head2 calendar
 
-    my $out = calendar (year => 2021, month => 1);
-    print $out->{html};
+    my $out = calendar (year => 2010, month => 10);
 
-Make the calendar.
+Make the calendar. The return value is an HTML::Make object. To get
+the actual HTML, call its C<text> method:
+
+[% example("calendar") %]
+
+The possible arguments are
+
+=over
+
+=item cdata
+
+Callback data, see L</dayc>.
+
+=item dayc
+
+Day callback. If this is omitted, a default element is added. The day
+callback is called with three arguments, first L</cdata>, second the
+date as a hash reference with arguments C<year>, C<month> and C<dom>
+(day of month, a number from 1 to 31), and third the HTML element to
+attach the return value to, representing the cell of the calendar.
+
+    &{$dayc} ($cdata, {year => 2020, month => 12, day => 21}, $td);
+
+where C<$td> is an L<HTML::Make> object.
+
+=item month
+
+The month, as a number from 1 to 12. If the month is omitted, the
+current month is used as given by L<Date::Calc/Today>.
+
+=item year
+
+The year, as a four-digit number like C<2020>. If the year is omitted,
+the current year is used, as given by L<Date::Calc/Today>.
+
+=back
+
+=head3 Daily menu
+
+This example demonstrates the use of L</dayc> and L</cdata>.
+
+[% example("menu") %]
 
 =head1 DEPENDENCIES
 
@@ -53,6 +97,41 @@ Date::Calc supplies the date information for the calendar.
 =item L<HTML::Make>
 
 HTML::Make is used to generate the HTML for the calendar.
+
+=back
+
+=head1 SCRIPT
+
+See L<html-cal> in the distribution.
+
+=head1 SEE ALSO
+
+=head2 Other CPAN modules
+
+=over
+
+=item L<Calendar::List>
+
+=item L<Calendar::Schedule>
+
+=item L<Calendar::Simple>
+
+=item L<Date::Calendar>
+
+Includes a script L<cal2html> for making HTML.
+
+=item L<HTML::Calendar::Monthly>
+
+Fork of L</HTML::Calendar::Simple>. The documentation is largely
+copy-pasted from that with some alterations.
+
+=item L<HTML::Calendar::Simple>
+
+=item L<HTML::CalendarMonth>
+
+=item L<HTML::CalendarMonthSimple>
+
+=item L<SVG::Calendar>
 
 =back
 

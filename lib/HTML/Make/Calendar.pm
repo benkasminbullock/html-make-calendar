@@ -31,6 +31,16 @@ sub calendar
 	$month = $options{month};
 	delete $options{month};
     }
+    my $dayc;
+    if ($options{dayc}) {
+	$dayc = $options{dayc};
+	delete $options{dayc};
+    }
+    my $cdata;
+    if ($options{cdata}) {
+	$cdata = $options{cdata};
+	delete $options{cdata};
+    }
     for my $k (sort keys %options) {
 	if ($options{$k}) {
 	    carp "Unknown option '$k'";
@@ -83,23 +93,32 @@ sub calendar
 	my $wdt = substr (Day_of_Week_to_Text ($wd), 0, 2);
 	$wdr->push ('th', text => $wdt);
     }
-
-    for my $row (1..$rows) {
+    for my $wom (1..$rows) {
 	my $tr = $tbody->push ('tr', attr => {class => 'cal-row'});
 	for my $dow (1..7) {
 	    my $td = $tr->push ('td', attr => {class => 'cal-day'});
 	    my $cell = shift @cells;
 	    my $dom = $cell->{dom};
 	    if (defined $dom) {
-		$td->push ('span', text => $dom,
-			   attr => {class => 'cal-dom'});
+		if ($dayc) {
+		    &{$dayc} ($cdata,
+			  {
+			      year => $year,
+			      month => $month,
+			      dom => $dom,
+			      dow => $dow,
+			      wom => $wom,
+			  }, 
+			  $td);
+		}
+		else {
+		    $td->push ('span', text => $dom,
+			       attr => {class => 'cal-dom'});
+		}
 	    }
 	}
     }
-    my %r;
-    $r{table} = $table;
-    $r{html} = $table->text ();
-    return \%r;
+    return $table;
 }
 
 1;
