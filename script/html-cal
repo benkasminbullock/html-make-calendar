@@ -1,0 +1,12 @@
+#!/home/ben/software/install/bin/perl
+use warnings;
+use strict;
+use utf8;
+use FindBin '$Bin';
+use HTML::Make::Calendar 'calendar';
+
+print calendar (verbose => 1, year => 2021, month => 1,);
+
+# Local variables:
+# mode: perl
+# End:

@@ -13,6 +13,8 @@ WriteMakefile (
     AUTHOR => 'Ben Bullock <bkb@cpan.org>',
     LICENSE => 'perl',
     PREREQ_PM => {
+	'HTML::Make' => 0,
+	'Date::Calc' => 0,
     },
     META_MERGE => {
 	'meta-spec' => {
