@@ -7,14 +7,15 @@ my $pod = 'lib/HTML/Make/Calendar.pod';
 my $github = 'github.com/benkasminbullock/html-make-calendar';
 my $repo = "https://$github";
 WriteMakefile (
+    EXE_FILES => ['script/html-cal',],
     NAME => 'HTML::Make::Calendar',
     VERSION_FROM => $pm,
     ABSTRACT_FROM => $pod,
     AUTHOR => 'Ben Bullock <bkb@cpan.org>',
     LICENSE => 'perl',
     PREREQ_PM => {
-	'HTML::Make' => 0,
-	'Date::Calc' => 0,
+	'HTML::Make' => '0.12',
+	'Date::Calc' => '6.4',
     },
     META_MERGE => {
 	'meta-spec' => {

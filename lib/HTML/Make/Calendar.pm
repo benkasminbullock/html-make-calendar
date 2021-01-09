@@ -9,10 +9,10 @@ our @EXPORT_OK = qw/calendar/;
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
-our $VERSION = '0.01';
+our $VERSION = '0.00_01';
 
-use HTML::Make;
 use Date::Calc ':all';
+use HTML::Make;
 
 sub calendar
 {
@@ -32,8 +32,10 @@ sub calendar
 	delete $options{month};
     }
     for my $k (sort keys %options) {
-	carp "Unknown option '$k'";
-	delete $options{$k};
+	if ($options{$k}) {
+	    carp "Unknown option '$k'";
+	    delete $options{$k};
+	}
     }
     my $dim = Days_in_Month ($year, $month);
     if ($verbose) {
@@ -70,18 +72,34 @@ sub calendar
     my $table = HTML::Make->new ('table');
     # This is the correct HTML, although nobody really does this.
     my $tbody = $table->push ('tbody');
+
+    my $titler = $tbody->push ('tr');
+    my $titleh = $titler->push ('th', attr => {colspan => 7});
+    my $my = Month_to_Text ($month) . " $year";
+    $titleh->add_text ($my);
+
+    my $wdr = $tbody->push ('tr');
+    for my $wd (1..7) {
+	my $wdt = substr (Day_of_Week_to_Text ($wd), 0, 2);
+	$wdr->push ('th', text => $wdt);
+    }
+
     for my $row (1..$rows) {
-	my $tr = $tbody->push ('tr');
+	my $tr = $tbody->push ('tr', attr => {class => 'cal-row'});
 	for my $dow (1..7) {
-	    my $td = $tr->push ('td');
+	    my $td = $tr->push ('td', attr => {class => 'cal-day'});
 	    my $cell = shift @cells;
 	    my $dom = $cell->{dom};
 	    if (defined $dom) {
-		$td->add_text ($dom);
+		$td->push ('span', text => $dom,
+			   attr => {class => 'cal-dom'});
 	    }
 	}
     }
-    return $table->text ();
+    my %r;
+    $r{table} = $table;
+    $r{html} = $table->text ();
+    return \%r;
 }
 
 1;

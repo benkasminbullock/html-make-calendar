@@ -31,6 +31,29 @@ corresponding to L<git commit [% commit.commit %]|[% info.repo
 
 =head1 DESCRIPTION
 
+This module constructs HTML calendars.
+
 =head1 FUNCTIONS
+
+=head2 calendar
+
+    my $out = calendar (year => 2021, month => 1);
+    print $out->{html};
+
+Make the calendar.
+
+=head1 DEPENDENCIES
+
+=over
+
+=item L<Date::Calc>
+
+Date::Calc supplies the date information for the calendar.
+
+=item L<HTML::Make>
+
+HTML::Make is used to generate the HTML for the calendar.
+
+=back
 
 [% INCLUDE "author" %]
