@@ -68,6 +68,16 @@ attach the return value to, representing the cell of the calendar.
 
 where C<$td> is an L<HTML::Make> object.
 
+=item first
+
+The first day of the week. The default is 1 for Monday. Specify 7 to
+start on Sunday:
+
+[% example("first") %]
+
+Any other day of the week may also be used, for example specify 3 to
+start the weeks on Wednesdays.
+
 =item month
 
 The month, as a number from 1 to 12. If the month is omitted, the
@@ -158,6 +168,17 @@ copy-pasted from that with some alterations.
 =item L<HTML::CalendarMonthSimple>
 
 =item L<SVG::Calendar>
+
+=back
+
+=head2 Other HTML calendar generators
+
+=over
+
+=item Python
+
+The defaults of HTML calendar are somewhat based on Python's
+L<calendar.HTMLCalendar|https://docs.python.org/3/library/calendar.html#calendar.HTMLCalendar>.
 
 =back
 

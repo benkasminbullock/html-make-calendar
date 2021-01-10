@@ -9,12 +9,14 @@ our @EXPORT_OK = qw/calendar/;
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
-our $VERSION = '0.00_02';
+our $VERSION = '0.00_03';
 
 use Date::Calc ':all';
 use HTML::Make;
 
 # Default HTML elements and classes.
+
+my @dowclass = (undef, "mon", "tue", "wed", "thu", "fri", "sat", "sun");
 
 # To do: Put this in a configuration file.
 
@@ -89,6 +91,20 @@ sub calendar
 	$cdata = $options{cdata};
 	delete $options{cdata};
     }
+    my $html_week = $html{week}{element};
+    if ($options{html_week}) {
+	$html_week = $options{html_week};
+	delete $options{html_week};
+    }
+    my $first = 1;
+    if ($options{first}) {
+	$first = $options{first};
+	delete $options{first};
+	if (int ($first) != $first || $first < 1 || $first > 7) {
+	    carp "Use a number between 1 (Monday) and 7 (Sunday) for first";
+	    $first = 1;
+	}
+    }
     # To do: Allow the user to use their own HTML tags.
 
     for my $k (sort keys %options) {
@@ -97,27 +113,39 @@ sub calendar
 	    delete $options{$k};
 	}
     }
+    # Map from columns of the calendar to days of the week, e.g. 1 ->
+    # 7 if Sunday is the first day of the week.
+    my %col2dow;
+    for (1..7) {
+	my $col2dow = $_ + $first - 1;
+	if ($col2dow > 7) {
+	    $col2dow -= 7;
+	}
+	$col2dow{$_} = $col2dow;
+    }
+    my %dow2col = reverse %col2dow;
     my $dim = Days_in_Month ($year, $month);
     if ($verbose) {
 	# To do: Add a messaging routine with caller line numbers
 	# rather than just use print.
 	print "There are $dim days in month $month of $year.\n";
     }
-    my @dow;
+    my @col;
     # The number of weeks
     my $weeks = 1;
     my $prev = 0;
     for my $day (1..$dim) {
 	my $dow = Day_of_Week ($year, $month, $day);
-	$dow[$day] = $dow;
-	if ($dow == 1 || $dow < $prev) {
+	my $col = $dow2col{$dow};
+	$col[$day] = $col;
+	if ($col < $prev) {
 	    $weeks++;
 	}
-	$prev = $dow;
+	$prev = $col;
     }
     # The number of empty cells we need at the start of the month.
-    my $fill_start = $dow[1] - 1;
-    my $fill_end = 7 - $dow[-1];
+    my $fill_start = $col[1] - 1;
+    my $fill_end = 7 - $col[-1];
     if ($verbose) {
 	print "Start $fill_start, end $fill_end, weeks $weeks\n";
     }
@@ -128,12 +156,13 @@ sub calendar
 	push @cells, {};
     }
     for (1..$dim) {
-	push @cells, {dom => $_, dow => $dow[$_]};
+	my $col = $col[$_];
+	push @cells, {dom => $_, col => $col, dow => $col2dow{$col}};
     }
     for (1..$fill_end) {
 	push @cells, {};
     }
-    my $calendar = HTML::Make->new ($html{calendar});
+    my $calendar = HTML::Make->new ($html{calendar}{element});
     # As far as I know, <table><tbody> is the correct HTML, although
     # nobody really does this.
 
@@ -149,9 +178,10 @@ sub calendar
     $titleh->add_text ($my);
     # To do: Allow the user to override this.
     my $wdr = $tbody->push ('tr');
-    for my $dow (1..7) {
+    for my $col (1..7) {
 	# To do: Allow the user to use their own weekdays (possibly
 	# allow them to use the language specifier of Date::Calc).
+	my $dow = $col2dow{$col};
 	my $wdt = substr (Day_of_Week_to_Text ($dow), 0, 2);
 	my $dow_el = add_el ($wdr, $html{dow});
 	$dow_el->add_text ($wdt);
@@ -159,13 +189,15 @@ sub calendar
     # wom = week of month
     for my $wom (1..$weeks) {
 	my $week = add_el ($tbody, $html{week});
-	# dow = day of week
-	for my $dow (1..7) {
+	for my $col (1..7) {
+	    # dow = day of week
+	    my $dow = $col2dow{$col};
 	    my $day = add_el ($week, $html{day});
 	    my $cell = shift @cells;
 	    # dom = day of month
 	    my $dom = $cell->{dom};
 	    if (defined $dom) {
+		$day->add_class ('cal-' . $dowclass[$dow]);
 		if ($dayc) {
 		    &{$dayc} ($cdata,
 			  {
@@ -181,6 +213,9 @@ sub calendar
 		    $day->push ('span', text => $dom,
 				attr => {class => 'cal-dom'});
 		}
+	    }
+	    else {
+		$day->add_class ('cal-noday');
 	    }
 	    # To do: allow a callback on the packing cells
 	}
