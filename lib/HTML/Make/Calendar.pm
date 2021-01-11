@@ -9,39 +9,25 @@ our @EXPORT_OK = qw/calendar/;
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
-our $VERSION = '0.00_03';
+our $VERSION = '0.00_04';
 
 use Date::Calc ':all';
 use HTML::Make;
+use Table::Readable 'read_table';
 
 # Default HTML elements and classes.
 
 my @dowclass = (undef, "mon", "tue", "wed", "thu", "fri", "sat", "sun");
 
-# To do: Put this in a configuration file.
+# Read the configuration file.
 
-my %html = (
-    calendar => {
-	element => 'table',
-	class => '',
-	desc => 'the calendar itself',
-    },
-    week => {
-	element => 'tr',
-	class => 'cal-week',
-	desc => 'a week',
-    },
-    day => {
-	element => 'td',
-	class => 'cal-day',
-	desc => 'a day',
-    },
-    dow => {
-	element => 'th',
-	class => 'cal-dow',
-	desc => 'the day of the week (Monday, Tuesday, etc.)',
-    },
-);
+my $html_file = __FILE__;
+$html_file =~ s!\.pm!/html.txt!;
+my @html = read_table ($html_file);
+my %html;
+for (@html) {
+    $html{$_->{item}} = $_
+}
 
 # Add an HTML element defined by $thing to $parent.
 
@@ -63,43 +49,29 @@ sub add_el
     return $element;
 }
 
+sub option
+{
+    my ($ref, $options, $what) = @_;
+    if ($options->{$what}) {
+	$$ref = $options->{$what};
+	delete $options->{$what};
+    }
+}
+
 sub calendar
 {
     my (%options) = @_;
-    # To do: Reduce repetitiveness.
-    my $verbose;
-    if ($options{verbose}) {
-	$verbose = 1;
-	delete $options{verbose};
-    }
+    option (\my $verbose, \%options, 'verbose');
     my ($year, $month, undef) = Today ();
-    if ($options{year}) {
-	$year = $options{year};
-	delete $options{year};
-    }
-    if ($options{month}) {
-	$month = $options{month};
-	delete $options{month};
-    }
-    my $dayc;
-    if ($options{dayc}) {
-	$dayc = $options{dayc};
-	delete $options{dayc};
-    }
-    my $cdata;
-    if ($options{cdata}) {
-	$cdata = $options{cdata};
-	delete $options{cdata};
-    }
+    option (\$year, \%options, 'year');
+    option (\$month, \%options, 'month');
+    option (\my $dayc, \%options, 'dayc');
+    option (\my $cdata, \%options, 'cdata');
     my $html_week = $html{week}{element};
-    if ($options{html_week}) {
-	$html_week = $options{html_week};
-	delete $options{html_week};
-    }
+    option (\$html_week, \%options, 'html_week');
     my $first = 1;
-    if ($options{first}) {
-	$first = $options{first};
-	delete $options{first};
+    option (\$first, \%options, 'first');
+    if ($first != 1) {
 	if (int ($first) != $first || $first < 1 || $first > 7) {
 	    carp "Use a number between 1 (Monday) and 7 (Sunday) for first";
 	    $first = 1;

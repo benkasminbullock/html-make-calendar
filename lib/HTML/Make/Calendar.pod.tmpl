@@ -90,12 +90,6 @@ the current year is used, as given by L<Date::Calc/Today>.
 
 =back
 
-=head3 Daily menu
-
-This example demonstrates the use of L</dayc> and L</cdata>.
-
-[% example("menu") %]
-
 =head3 Phases of the moon
 
 This example demonstrates the use of L</dayc> and L</cdata> by adding
@@ -104,23 +98,42 @@ L<Astro::MoonPhase> (not included with this distribution).
 
 [% example("moon") %]
 
-=head1 CSS STYLES
+=head3 Daily menu
 
-The elements of the calendar have the following CSS default style names:
+This example demonstrates the use of L</dayc> and L</cdata>, and how
+to add your own HTML into the cells of the calendar.
 
-=cut
+[% example("menu") %]
 
-# To do: Add information about the HTML elements and their CSS classes
-# from the machine-readable table.
+=head1 DEFAULT HTML ELEMENTS AND CSS CLASSES
 
-=pod
+The elements of the calendar have the following default HTML elements
+and CSS default style names:
 
-=cut
+=over
 
-# To do: Document the abbreviations like "dom" or "wom".
+[% FOR el IN html %]
+=item [% el.item %]
 
-=pod
+The default HTML element for C<[% el.item %]> ([% el.desc %]) is C<< <[%
+el.element %]> >> with class C<[% el.class %]>
+[%- IF el.item == "day" %] as well as class C<cal-mon>, C<cal-tue>, etc[% END %].
 
+[% END # html %]
+
+=back
+
+=head1 TERMINOLOGY
+
+=over
+
+=item dow = day of the week (Monday, Tuesday, etc.)
+
+=item dom = day of the month (1 to 31)
+
+=item wom = week of the month (corresponds to the rows of the calendar)
+
+=back
 
 =head1 DEPENDENCIES
 

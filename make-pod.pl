@@ -7,6 +7,7 @@ use Perl::Build qw/get_info get_commit/;
 use Perl::Build::Pod ':all';
 use Deploy qw/do_system older/;
 use Getopt::Long;
+use Table::Readable 'read_table';
 my $ok = GetOptions (
     'force' => \my $force,
     'verbose' => \my $verbose,
@@ -21,6 +22,8 @@ my %pbv = (
 );
 my $info = get_info (%pbv);
 my $commit = get_commit (%pbv);
+my @html = read_table ("$Bin/lib/HTML/Make/Calendar/html.txt");
+
 # Names of the input and output files containing the documentation.
 
 my $pod = 'Calendar.pod';
@@ -32,6 +35,7 @@ my $output = "$Bin/lib/HTML/Make/$pod";
 my %vars = (
     info => $info,
     commit => $commit,
+    html => \@html,
 );
 
 my $tt = Template->new (
