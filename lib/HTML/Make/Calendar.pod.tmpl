@@ -64,7 +64,7 @@ date as a hash reference with arguments C<year>, C<month> and C<dom>
 (day of month, a number from 1 to 31), and third the HTML element to
 attach the return value to, representing the cell of the calendar.
 
-    &{$dayc} ($cdata, {year => 2020, month => 12, day => 21}, $td);
+    &{$dayc} ($cdata, {year => 2020, month => 12, dom => 21}, $td);
 
 where C<$td> is an L<HTML::Make> object.
 
