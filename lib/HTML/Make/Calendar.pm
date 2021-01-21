@@ -49,66 +49,113 @@ sub add_el
     return $element;
 }
 
+sub add_month_heading
+{
+    my ($o, $tbody) = @_;
+    # Add the title to the calendar
+    my $titler = $tbody->push ('tr');
+    my $titleh = $titler->push ('th', attr => {colspan => 7});
+    # To do: Allow the caller to override this.
+    my $my = Month_to_Text ($o->{month}) . " $o->{year}";
+    $titleh->add_text ($my);
+    # To do: Allow the caller to override this.
+    my $wdr = $tbody;
+    if (! $o->{weekless}) {
+	$wdr = $tbody->push ('tr');
+    }
+    for my $col (1..7) {
+	# To do: Allow the caller to use their own weekdays
+	# (possibly allow them to use the language specifier
+	# of Date::Calc).
+	my $dow = $o->{col2dow}{$col};
+	my $wdt = substr (Day_of_Week_to_Text ($dow), 0, 2);
+	my $dow_el = add_el ($wdr, $html{dow});
+	$dow_el->add_text ($wdt);
+    }
+}
+my $x;
 sub option
 {
-    my ($ref, $options, $what) = @_;
+    my ($o, $options, $what) = @_;
     if ($options->{$what}) {
-	$$ref = $options->{$what};
+#	if ($o->{verbose}) {
+#	    vmsg ("Setting $what to $options->{$what}");
+#	}
+	$o->{$what} = $options->{$what};
 	delete $options->{$what};
     }
 }
 
-sub calendar
+sub check_first
 {
-    my (%options) = @_;
-    option (\my $verbose, \%options, 'verbose');
-    my ($year, $month, undef) = Today ();
-    option (\$year, \%options, 'year');
-    option (\$month, \%options, 'month');
-    option (\my $dayc, \%options, 'dayc');
-    option (\my $cdata, \%options, 'cdata');
-    my $html_week = $html{week}{element};
-    option (\$html_week, \%options, 'html_week');
-    my $first = 1;
-    option (\$first, \%options, 'first');
-    if ($first != 1) {
-	if (int ($first) != $first || $first < 1 || $first > 7) {
+    my ($o) = @_;
+    if ($o->{first} != 1) {
+	if (int ($o->{first}) != $o->{first} ||
+	    $o->{first} < 1 ||
+	    $o->{first} > 7) {
 	    carp "Use a number between 1 (Monday) and 7 (Sunday) for first";
-	    $first = 1;
+	    $o->{first} = 1;
 	}
     }
-    # To do: Allow the user to use their own HTML tags.
+}
 
-    for my $k (sort keys %options) {
-	if ($options{$k}) {
-	    carp "Unknown option '$k'";
-	    delete $options{$k};
-	}
-    }
-    # Map from columns of the calendar to days of the week, e.g. 1 ->
-    # 7 if Sunday is the first day of the week.
+# Map from columns of the calendar to days of the week, e.g. 1 -> 7 if
+# Sunday is the first day of the week.
+
+sub map_dow2col
+{
+    my ($o) = @_;
     my %col2dow;
     for (1..7) {
-	my $col2dow = $_ + $first - 1;
+	my $col2dow = $_ + $o->{first} - 1;
 	if ($col2dow > 7) {
 	    $col2dow -= 7;
 	}
 	$col2dow{$_} = $col2dow;
     }
     my %dow2col = reverse %col2dow;
-    my $dim = Days_in_Month ($year, $month);
-    if ($verbose) {
-	# To do: Add a messaging routine with caller line numbers
-	# rather than just use print.
-	print "There are $dim days in month $month of $year.\n";
+    $o->{col2dow} = \%col2dow;
+    $o->{dow2col} = \%dow2col;
+}
+
+sub calendar
+{
+    my (%options) = @_;
+    my $o = {};
+    bless $o;
+    $o->option (\%options, 'verbose');
+    ($o->{year}, $o->{month}, undef) = Today ();
+    $o->option (\%options, 'year');
+    $o->option (\%options, 'month');
+    $o->option (\%options, 'dayc');
+    $o->option (\%options, 'cdata');
+    $o->{first} = 1;
+    $o->option (\%options, 'first');
+    $o->check_first ();
+    $o->option (\%options, 'weekless');
+    # To do: Allow the user to use their own HTML tags.
+    $o->{html_week} = $html{week};
+    $o->{html_month} = $html{month}{element};
+#    $o->option (\%options, 'html_month');
+#    $o->option (\%options, 'html_week');
+    for my $k (sort keys %options) {
+	if ($options{$k}) {
+	    carp "Unknown option '$k'";
+	    delete $options{$k};
+	}
+    }
+    $o->map_dow2col ();
+    my $dim = Days_in_Month ($o->{year}, $o->{month});
+    if ($o->{verbose}) {
+	vmsg ("There are $dim days in month $o->{month} of $o->{year}");
     }
     my @col;
     # The number of weeks
     my $weeks = 1;
     my $prev = 0;
     for my $day (1..$dim) {
-	my $dow = Day_of_Week ($year, $month, $day);
-	my $col = $dow2col{$dow};
+	my $dow = Day_of_Week ($o->{year}, $o->{month}, $day);
+	my $col = $o->{dow2col}{$dow};
 	$col[$day] = $col;
 	if ($col < $prev) {
 	    $weeks++;
@@ -116,65 +163,56 @@ sub calendar
 	$prev = $col;
     }
     # The number of empty cells we need at the start of the month.
-    my $fill_start = $col[1] - 1;
-    my $fill_end = 7 - $col[-1];
-    if ($verbose) {
-	print "Start $fill_start, end $fill_end, weeks $weeks\n";
+    $o->{fill_start} = $col[1] - 1;
+    $o->{fill_end} = 7 - $col[-1];
+    if ($o->{verbose}) {
+	vmsg ("Start $o->{fill_start}, end $o->{fill_end}, weeks $weeks");
     }
     my @cells;
     # To do: Allow the user to colour or otherwise alter empty cells,
     # for example with a callback or with a user-defined class.
-    for (1..$fill_start) {
+    for (1..$o->{fill_start}) {
 	push @cells, {};
     }
     for (1..$dim) {
 	my $col = $col[$_];
-	push @cells, {dom => $_, col => $col, dow => $col2dow{$col}};
+	push @cells, {dom => $_, col => $col, dow => $o->{col2dow}{$col}};
     }
-    for (1..$fill_end) {
+    for (1..$o->{fill_end}) {
 	push @cells, {};
     }
-    my $calendar = HTML::Make->new ($html{calendar}{element});
-    # As far as I know, <table><tbody> is the correct HTML, although
-    # nobody really does this.
-
-    # To do: inspect the type of $html{calendar} and don't add the
-    # <tbody> unless it is a <table> element.
-    my $tbody = $calendar->push ('tbody');
-    # To do: These should be overridden if the caller doesn't want to
-    # use table, tr, td to construct the calendar.
-    my $titler = $tbody->push ('tr');
-    my $titleh = $titler->push ('th', attr => {colspan => 7});
-    # To do: Allow the caller to override this.
-    my $my = Month_to_Text ($month) . " $year";
-    $titleh->add_text ($my);
-    # To do: Allow the user to override this.
-    my $wdr = $tbody->push ('tr');
-    for my $col (1..7) {
-	# To do: Allow the user to use their own weekdays (possibly
-	# allow them to use the language specifier of Date::Calc).
-	my $dow = $col2dow{$col};
-	my $wdt = substr (Day_of_Week_to_Text ($dow), 0, 2);
-	my $dow_el = add_el ($wdr, $html{dow});
-	$dow_el->add_text ($wdt);
+    my $calendar = HTML::Make->new ($o->{html_month});
+    my $tbody = $calendar;
+    my $table;
+    if ($o->{html_month} eq 'table') {
+	$tbody = $calendar->push ('tbody');
+	$table = 1;
+    }
+    if (! $o->{weekless}) {
+	if ($table) {
+	    $o->add_month_heading ($tbody);
+	}
     }
     # wom = week of month
     for my $wom (1..$weeks) {
-	my $week = add_el ($tbody, $html{week});
+	my $week = $tbody;
+	if (! $o->{weekless}) {
+	    $week = add_el ($tbody, $o->{html_week});
+	}
 	for my $col (1..7) {
 	    # dow = day of week
-	    my $dow = $col2dow{$col};
+	    my $dow = $o->{col2dow}{$col};
 	    my $day = add_el ($week, $html{day});
 	    my $cell = shift @cells;
 	    # dom = day of month
 	    my $dom = $cell->{dom};
 	    if (defined $dom) {
 		$day->add_class ('cal-' . $dowclass[$dow]);
-		if ($dayc) {
-		    &{$dayc} ($cdata,
+		if ($o->{dayc}) {
+		    &{$o->{dayc}} ($o->{cdata},
 			  {
-			      year => $year,
-			      month => $month,
+			      year => $o->{year},
+			      month => $o->{month},
 			      dom => $dom,
 			      dow => $dow,
 			      wom => $wom,
@@ -193,6 +231,12 @@ sub calendar
 	}
     }
     return $calendar;
+}
+
+# To do: Add caller line numbers rather than just use print.
+sub vmsg
+{
+    print "@_\n";
 }
 
 1;
