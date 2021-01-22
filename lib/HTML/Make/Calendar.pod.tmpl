@@ -25,7 +25,7 @@ This method was added in version [% version %] of the module.
 
 =head1 SYNOPSIS
 
-    use [% info.colon %];
+[% example("synopsis") %]
 
 =head1 VERSION
 
@@ -58,15 +58,21 @@ Callback data, see L</dayc>.
 
 =item dayc
 
-Day callback. If this is omitted, a default element is added. The day
-callback is called with three arguments, first L</cdata>, second the
-date as a hash reference with arguments C<year>, C<month> and C<dom>
-(day of month, a number from 1 to 31), and third the HTML element to
-attach the return value to, representing the cell of the calendar.
+Day callback which fills in the "day" cell of the calendar. If this is
+omitted, a default element is added. The day callback is called with
+three arguments, first L</cdata>, your data, second the date as a hash
+reference with arguments C<year>, C<month> and C<dom> (day of month, a
+number from 1 to 31), and third the HTML element to attach the return
+value to, representing the cell of the calendar, like this:
 
     &{$dayc} ($cdata, {year => 2020, month => 12, dom => 21}, $td);
 
 where C<$td> is an L<HTML::Make> object.
+
+=item daynames
+
+Specify the names of the days. See L</Japanese calendar> for an
+example.
 
 =item first
 
@@ -82,6 +88,11 @@ start the weeks on Wednesdays.
 
 The month, as a number from 1 to 12. If the month is omitted, the
 current month is used as given by L<Date::Calc/Today>.
+
+=item monthc
+
+Callback for month and year name. See L</Japanese calendar> for an
+example.
 
 =item year
 
@@ -104,6 +115,16 @@ This example demonstrates the use of L</dayc> and L</cdata>, and how
 to add your own HTML into the cells of the calendar.
 
 [% example("menu") %]
+
+=head3 Japanese calendar
+
+This example shows making a Japanese calendar using L</daynames> as
+well as L</monthc> to put the month name into Japanese. It uses
+L<Date::Qreki>, L<Calendar::Japanese::Holiday>,
+L<Lingua::JA::Numbers>, and L<Lingua::JA::FindDates> to make various
+bits of information typically found on Japanese calendars.
+
+[% example("japanese") %]
 
 =head1 DEFAULT HTML ELEMENTS AND CSS CLASSES
 

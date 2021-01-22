@@ -5,7 +5,7 @@ desc: the calendar itself
 
 item: month
 element: table
-class: month
+class: cal-month
 desc: a month
 
 item: week

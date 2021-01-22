@@ -9,11 +9,13 @@ our @EXPORT_OK = qw/calendar/;
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
-our $VERSION = '0.00_04';
+
+our $VERSION = '0.00_05';
 
 use Date::Calc ':all';
 use HTML::Make;
 use Table::Readable 'read_table';
+#use Data::Dumper;
 
 # Default HTML elements and classes.
 
@@ -55,32 +57,35 @@ sub add_month_heading
     # Add the title to the calendar
     my $titler = $tbody->push ('tr');
     my $titleh = $titler->push ('th', attr => {colspan => 7});
-    # To do: Allow the caller to override this.
-    my $my = Month_to_Text ($o->{month}) . " $o->{year}";
-    $titleh->add_text ($my);
+    my $my;
+    if ($o->{monthc}) {
+	my $date = {month => $o->{month}, year => $o->{year}};
+	$my = &{$o->{monthc}} ($o->{cdata}, $date, $titleh);
+    }
+    else {
+	$my = Month_to_Text ($o->{month}) . " $o->{year}";
+	$titleh->add_text ($my);
+    }
     # To do: Allow the caller to override this.
     my $wdr = $tbody;
     if (! $o->{weekless}) {
 	$wdr = $tbody->push ('tr');
     }
     for my $col (1..7) {
-	# To do: Allow the caller to use their own weekdays
-	# (possibly allow them to use the language specifier
-	# of Date::Calc).
 	my $dow = $o->{col2dow}{$col};
-	my $wdt = substr (Day_of_Week_to_Text ($dow), 0, 2);
+	my $wdt = $o->{daynames}[$dow];
 	my $dow_el = add_el ($wdr, $html{dow});
 	$dow_el->add_text ($wdt);
     }
 }
-my $x;
+
 sub option
 {
     my ($o, $options, $what) = @_;
     if ($options->{$what}) {
-#	if ($o->{verbose}) {
-#	    vmsg ("Setting $what to $options->{$what}");
-#	}
+	if ($o->{verbose}) {
+	    vmsg ("Setting $what to $options->{$what}");
+	}
 	$o->{$what} = $options->{$what};
 	delete $options->{$what};
     }
@@ -128,14 +133,27 @@ sub calendar
     $o->option (\%options, 'year');
     $o->option (\%options, 'month');
     $o->option (\%options, 'dayc');
+    $o->option (\%options, 'monthc');
     $o->option (\%options, 'cdata');
     $o->{first} = 1;
     $o->option (\%options, 'first');
     $o->check_first ();
     $o->option (\%options, 'weekless');
+    $o->option (\%options, 'daynames');
     # To do: Allow the user to use their own HTML tags.
     $o->{html_week} = $html{week};
     $o->{html_month} = $html{month}{element};
+    if ($o->{daynames}) {
+	if (defined $o->{daynames}[0] && scalar (@{$o->{daynames}}) == 7) {
+	    # Off-by-one
+	    unshift @{$o->{daynames}}, '';
+	}
+    }
+    else {
+	for (1..7) {
+	    $o->{daynames}[$_] = substr (Day_of_Week_to_Text ($_), 0, 2);
+	}
+    }
 #    $o->option (\%options, 'html_month');
 #    $o->option (\%options, 'html_week');
     for my $k (sort keys %options) {
