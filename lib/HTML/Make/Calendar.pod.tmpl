@@ -56,6 +56,12 @@ The possible arguments are
 
 Callback data, see L</dayc>.
 
+=item day_html
+
+Override the HTML element used to make the "day" cells. The default is
+C<td>. If you override this then you also need to override the parent
+elements, otherwise HTML::Make will fuss about compatibility.
+
 =item dayc
 
 Day callback which fills in the "day" cell of the calendar. If this is
@@ -89,10 +95,32 @@ start the weeks on Wednesdays.
 The month, as a number from 1 to 12. If the month is omitted, the
 current month is used as given by L<Date::Calc/Today>.
 
+=item month_html
+
+The HTML element used to make a month of the calendar. The default is
+C<table>. You don't need to supply E<lt> and E<gt>, just the
+alphabetic part of the HTML element, as with the parent module
+HTML::Make.
+
 =item monthc
 
 Callback for month and year name. See L</Japanese calendar> for an
 example.
+
+=item week_html
+
+The HTML element used to make a week of the calendar. The default is
+C<tr>. You don't need to supply E<lt> and E<gt>, just the
+alphabetic part of the HTML element, as with the parent module
+HTML::Make.
+
+=item weekless
+
+Set to a true value to not use weeks. If you switch off weeks, the
+return value is the HTML elements but not subdivided into week blocks
+but whose parent is the month. This is for people who want to style
+their calendars with CSS, such as a CSS grid, rather than using HTML
+tables.
 
 =item year
 
@@ -120,7 +148,7 @@ to add your own HTML into the cells of the calendar.
 
 This example shows making a Japanese calendar using L</daynames> as
 well as L</monthc> to put the month name into Japanese. It uses
-L<Date::Qreki>, L<Calendar::Japanese::Holiday>,
+L<Calendar::Japanese::Holiday>, L<Date::Qreki>,
 L<Lingua::JA::Numbers>, and L<Lingua::JA::FindDates> to make various
 bits of information typically found on Japanese calendars.
 

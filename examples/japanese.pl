@@ -2,7 +2,6 @@
 use warnings;
 use strict;
 use utf8;
-use FindBin '$Bin';
 use HTML::Make::Calendar 'calendar';
 use Date::Qreki 'rokuyou_unicode';
 use Calendar::Japanese::Holiday;
@@ -24,7 +23,7 @@ sub jday
     my $name = isHoliday (@jdate);
     my $rokuyou = rokuyou_unicode (@jdate);
     $element->push ('span', text => num2ja ($date->{dom}));
-	$element->push ('br');
+    $element->push ('br');
     $element->push ('span', text => $rokuyou, attr => {class => 'rokuyou'});
     if ($name) {
 	$element->push ('br');

@@ -35,14 +35,15 @@ for (@html) {
 
 sub add_el
 {
-    my ($parent, $thing) = @_;
+    my ($parent, $thing, $override) = @_;
     my $class = $thing->{class};
     my $type = $thing->{element};
+    if ($override) {
+	$type = $override;
+    }
     my $element;
     if ($class) {
-	# HTML::Make should have a class pusher since it is so common
-	# http://mikan/bugs/bug/2108
-	$element = $parent->push ($type, attr => {class => $class});
+	$element = $parent->push ($type, class => $class);
     }
     else {
 	# Allow non-class elements if the user doesn't want a class.
@@ -141,8 +142,12 @@ sub calendar
     $o->option (\%options, 'weekless');
     $o->option (\%options, 'daynames');
     # To do: Allow the user to use their own HTML tags.
-    $o->{html_week} = $html{week};
-    $o->{html_month} = $html{month}{element};
+    $o->{month_html} = $html{month}{element};
+    $o->{week_html} = $html{week}{element};
+    $o->{day_html} = $html{day}{element};
+    $o->option (\%options, 'month_html');
+    $o->option (\%options, 'week_html');
+    $o->option (\%options, 'day_html');
     if ($o->{daynames}) {
 	if (defined $o->{daynames}[0] && scalar (@{$o->{daynames}}) == 7) {
 	    # Off-by-one
@@ -199,10 +204,11 @@ sub calendar
     for (1..$o->{fill_end}) {
 	push @cells, {};
     }
-    my $calendar = HTML::Make->new ($o->{html_month});
+    my $calendar = HTML::Make->new ($o->{month_html},
+				    class => $html{month}{class});
     my $tbody = $calendar;
     my $table;
-    if ($o->{html_month} eq 'table') {
+    if ($o->{month_html} eq 'table') {
 	$tbody = $calendar->push ('tbody');
 	$table = 1;
     }
@@ -215,12 +221,12 @@ sub calendar
     for my $wom (1..$weeks) {
 	my $week = $tbody;
 	if (! $o->{weekless}) {
-	    $week = add_el ($tbody, $o->{html_week});
+	    $week = add_el ($tbody, $html{week}, $o->{week_html});
 	}
 	for my $col (1..7) {
 	    # dow = day of week
 	    my $dow = $o->{col2dow}{$col};
-	    my $day = add_el ($week, $html{day});
+	    my $day = add_el ($week, $html{day}, $o->{day_html});
 	    my $cell = shift @cells;
 	    # dom = day of month
 	    my $dom = $cell->{dom};
@@ -238,8 +244,7 @@ sub calendar
 			  $day);
 		}
 		else {
-		    $day->push ('span', text => $dom,
-				attr => {class => 'cal-dom'});
+		    $day->push ('span', text => $dom, class => 'cal-dom');
 		}
 	    }
 	    else {
