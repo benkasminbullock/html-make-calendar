@@ -10,7 +10,7 @@ our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
 
-our $VERSION = '0.00_05';
+our $VERSION = '0.01';
 
 use Date::Calc ':all';
 use HTML::Make;
